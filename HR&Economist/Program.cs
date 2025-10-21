@@ -86,7 +86,7 @@ namespace HR_Economist
 
     public static class Names  //姓名类
     {
-        private static string name = File.ReadAllText("HR&Economist\\Names.txt");
+        private static string name = File.ReadAllText("HR-Economist//HR&Economist//Names.txt");
         public static string[] names = name.Split('、');
         public static string GetRandomName()   //生成随机简历姓名
         {
