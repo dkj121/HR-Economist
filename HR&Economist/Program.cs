@@ -28,7 +28,7 @@ namespace HR_Economist
                 List<CV_Info> CVInfosTemp = new List<CV_Info>();
                 for (int i = 0; i < CVNumber; i++)                              //生成随机简历
                 {
-                    CV_Info newCV = person.person_maker();
+                    CV_Info newCV = Person.person_maker();
                     CVInfosTemp.Add(newCV);
                 }
 
@@ -86,7 +86,7 @@ namespace HR_Economist
 
     public static class Names  //姓名类
     {
-        private static string name = File.ReadAllText("Names.txt");
+        private static string name = File.ReadAllText("HR-Economist//HR&Economist//Names.txt");
         public static string[] names = name.Split('、');
         public static string GetRandomName()   //生成随机简历姓名
         {
