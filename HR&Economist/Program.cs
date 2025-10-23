@@ -1,57 +1,60 @@
-﻿using System;
-using System.Security.Cryptography.X509Certificates;
-using System.Threading.Channels;
-
-namespace HR_Economist
+﻿namespace HR_Economist
 {
     public struct CV_Info  //简历信息
     {
         public string Name;  //姓名
-        public int dailyEconomy;  //每日赚钱
-        public int dailyNegativeEnergy;  //每日增长负能量
-        public int initalTotalAbility;  //总能力
+        public int selfAbility1;  //能力值1(每人两种能力)
+        public int selfAbility2;  //能力值2(每人两种能力)
     }
+    public enum Abilities   //能力种类
+    {
+    /*
+    1 食物获取与生产
+    2 居所建造
+    3 工艺与制造
+    4 医疗
+    5 防御与安全
+    6 探索与开拓
+    7 精神文化与信仰
+    */
+    FoodGetter_Producer,
+    House_Builder,
+    Craft_Manufacturer,
+    Medical,
+    Defense_Security,
+    Explore_Developer,
+    Spirit_Culture_Faith 
+    };
     internal class Program
     {
         static void Main(string[] args)
         {
-            int Day = 1, EconomyGoal = 100000, NegativeEnergyGoal = 100000, totalEconomy = 0, totalNegativeEnergy = 0;
-            int dailyTotalEconomy = 0, dailyTotalNegativeEnergy = 0;
+            int Day = 1;
             List<CV_Info> CVInfos = new List<CV_Info>();
             while (true)
             {
                 Console.WriteLine($"第 {Day} 天");
-                Console.WriteLine($"当前金钱目标：{totalEconomy}/{EconomyGoal}");
-                Console.WriteLine($"当前负能量目标：{totalNegativeEnergy}/{NegativeEnergyGoal}");
                 Random CVRandom = new Random();
-                int CVNumber = CVRandom.Next(3);
+                int CVNumber = CVRandom.Next(1, 3);
                 List<CV_Info> CVInfosTemp = new List<CV_Info>();
                 for (int i = 0; i < CVNumber; i++)                              //生成随机简历
                 {
-                    CV_Info newCV = Person.person_maker();
+                    CV_Info newCV = CVFactory.CV_maker();
                     CVInfosTemp.Add(newCV);
                 }
 
                 CVInfos.AddRange(CVInfosTemp);
-                dailyTotalEconomy = CVInfos.Sum(e => e.dailyEconomy);               //计算今日总收入
-                dailyTotalNegativeEnergy = CVInfos.Sum(e => e.dailyNegativeEnergy);
-
+                
                 Console.WriteLine($"今日共收到 {CVNumber} 份简历：");
-                Console.WriteLine($"今日收入{dailyTotalEconomy}元");
-                Console.WriteLine($"今日获得负能量{dailyTotalNegativeEnergy}");
                 Console.WriteLine("目前员工有：");    
                 foreach (var staff in CVInfos)
                 {
                     Console.WriteLine(staff.Name);
+                    Console.WriteLine($"能力1:{(Abilities)staff.selfAbility1},能力2:{(Abilities)staff.selfAbility2}");
                 }
-
-                totalEconomy += dailyTotalEconomy;                             //更新总收入
-                totalNegativeEnergy += dailyTotalNegativeEnergy;
-
-                if (totalEconomy >= EconomyGoal && totalNegativeEnergy >= NegativeEnergyGoal)
+                if (Day == 2)
                 {
-                    Console.WriteLine($"恭喜你在第 {Day} 天达成目标！");
-                    break;
+                    Console.WriteLine("Game Over");
                 }
                 Day++;
             }
@@ -59,34 +62,24 @@ namespace HR_Economist
 
     }
     
-    public class Person   //人类
+    public class CVFactory   //简历工厂
     {
-        public static CV_Info person_maker() 
+        public static CV_Info CV_maker()
         {
-            Random rand = new Random();
+            Random random1 = new Random();
+            Random random2 = new Random();
             return new CV_Info                     //生成随机简历
             {
                 Name = Names.GetRandomName(),
-                initalTotalAbility = 10000,
-                dailyEconomy = rand.Next(100, 300),
-                dailyNegativeEnergy = rand.Next(100, 300),
+                selfAbility1 = random1.Next(Enum.GetNames(typeof(Abilities)).Length - 1),
+                selfAbility2 = random2.Next(Enum.GetNames(typeof(Abilities)).Length - 1) 
             };
         }
     }
 
-    public static class Economy  //金钱类
-    {
-        
-    }
-
-    public static class NegativeEnergy  //负能量类
-    {
-        
-    }
-
     public static class Names  //姓名类
     {
-        private static string name = File.ReadAllText("HR&Economist//Names.txt");
+        private static string name = File.ReadAllText("Names.txt");
         public static string[] names = name.Split('、');
         public static string GetRandomName()   //生成随机简历姓名
         {
