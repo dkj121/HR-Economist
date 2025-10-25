@@ -1,4 +1,5 @@
-﻿using System.Configuration.Assemblies;
+﻿using System.ComponentModel;
+using System.Configuration.Assemblies;
 using System.Security;
 
 namespace HR_Economist
@@ -11,6 +12,7 @@ namespace HR_Economist
         public int selfWork; //工作
         public int WorkIncome; //工作收入
         public int NegativeEnergyIncome;   //负能量收入
+        public bool IsWorking;  //是否在职
     }
     public enum Abilities   //能力种类
     {
@@ -44,7 +46,7 @@ namespace HR_Economist
         Explore,
         Developer
     };
-    internal class Program
+    internal class Texting   //测试程序(入口,正式应用时许注释掉)
     {
         static void Main(string[] args)
         {
@@ -54,17 +56,19 @@ namespace HR_Economist
             while (true)
             {
                 Console.WriteLine($"第 {Day} 天");
-                Random CVRandom = new Random();
-                int todayCVNumber = CVRandom.Next(1, 3);
-                CVNumber = todayCVNumber;
                 List<CV_Info> CVInfosTemp = new List<CV_Info>();
-                for (int i = 0; i < CVNumber; i++)                              //生成随机简历
+                DayActivity.GenerateCVs(ref CVNumber, ref CVInfosTemp);
+                int todayCVNumber = CVInfosTemp.Count;
+
+                foreach (var cv in CVInfosTemp)
                 {
-                    CV_Info newCV = CVFactory.CV_maker();
-                    CVInfosTemp.Add(newCV);
+                    HR.Hire(cv, ref CVInfos);
                 }
 
-                CVInfos.AddRange(CVInfosTemp);
+                foreach (var cv in CVInfos)
+                {
+
+                }
 
                 Console.WriteLine($"今日共收到 {todayCVNumber} 份简历：");
                 Console.WriteLine("目前员工有：");
@@ -74,10 +78,13 @@ namespace HR_Economist
                     Console.WriteLine($"能力1:{(Abilities)staff.selfAbility1},能力2:{(Abilities)staff.selfAbility2}");
                     Console.WriteLine($"工作:{(Works)staff.selfWork},工作收入:{staff.WorkIncome} 牙币,负能量收入:{staff.NegativeEnergyIncome} 点");
                 }
-                foreach (var cv in CVInfosTemp)
+
+
+
+                foreach (var cv in CVInfos)
                 {
+                    if (!cv.IsWorking) continue;
                     Economy.YaFromWork(cv.WorkIncome);
-                    Economy.DailyYaIncome(cv.WorkIncome);
                     NegativeEnergy.BadEnergyFromWork(cv.NegativeEnergyIncome);
                 }
 
@@ -94,9 +101,24 @@ namespace HR_Economist
         }
     }
 
-    public class CVFactory   //简历工厂
+    public static class DayActivity
     {
-        public static CV_Info CV_maker()
+        public static void GenerateCVs(ref int CVNumber, ref List<CV_Info> CVInfosTemp)
+        {
+            Random CVRandom = new Random();
+            int todayCVNumber = CVRandom.Next(1, 3);
+            CVNumber += todayCVNumber;
+            for (int i = 0; i < todayCVNumber; i++)       //生成当天随机简历
+            {
+                CV_Info newCV = HR.CV_maker();
+                CVInfosTemp.Add(newCV);
+            }
+        }
+    }
+
+    public class HR   //人事部
+    {
+        public static CV_Info CV_maker()         //生成随机简历
         {
             string Name = Names.GetRandomName();
 
@@ -117,7 +139,7 @@ namespace HR_Economist
             int WorkIncome = workResults[0];
             int NegativeEnergyIncome = workResults[1];
 
-            return new CV_Info                     //生成随机简历
+            return new CV_Info
             {
                 Name = Name,
                 selfAbility1 = selfAbility1,
@@ -125,8 +147,30 @@ namespace HR_Economist
                 selfWork = selfWork,
                 WorkIncome = WorkIncome,
                 NegativeEnergyIncome = NegativeEnergyIncome,
+                IsWorking = true,
             };
         }
+        public static void Hire(CV_Info cv, ref List<CV_Info> CVInfos)  //录用方法
+        {
+            CVInfos.Add(cv);
+        }
+
+        public static void Fire(string name, ref List<CV_Info> CVInfos)  //解雇方法
+        {
+            int index = 0;
+            CV_Info FireCV = new CV_Info();
+            foreach (var cv in CVInfos)
+            {
+                if (cv.Name == name)
+                {
+                    FireCV = cv;
+                }
+                index++;
+            }
+            FireCV.IsWorking = false;
+            CVInfos[index] = FireCV;
+        }
+
         public static List<int> DoWork(int work, int ability1, int ability2)  //工作方法
         {
             int efficiency;
@@ -157,7 +201,7 @@ namespace HR_Economist
 
     public static class Names  //姓名类
     {
-        private static string name = File.ReadAllText("C:\\Users\\DKJ\\source\\repos\\HR&Economist\\HR&Economist\\Names.txt");
+        private static string name = File.ReadAllText("HR-Economist//HR&Economist//Names.txt");
         public static string[] names = name.Split('、');
         public static string GetRandomName()   //生成随机简历姓名
         {
@@ -170,24 +214,19 @@ namespace HR_Economist
 
     public static class Economy //经济结构
     {
-        public static int AllYa { get; set; } = 30;
-        public static int DailyIncome { get; set; } = 0;
-        public static bool IsBankrupt
+        public static int AllYa { get; set; } = 30;  //初始牙币
+        public static bool IsBankrupt  //破产判断
         {
             get
             {
                 return AllYa <= 0;
             }
         }
-        public static int YaFromWork(int workIncome)
+        public static int YaFromWork(int workIncome)  //牙币总收入
         {
             return AllYa += workIncome;
         }
-        public static int DailyYaIncome(int selfIncome)
-        {
-            return DailyIncome += selfIncome;
-        }
-        public static int DailyYaExpence(int CVNumber)
+        public static int DailyYaExpence(int CVNumber)   //每日牙币支出
         {
             return AllYa -= 10 * CVNumber;
         }
